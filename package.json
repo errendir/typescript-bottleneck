@@ -7,6 +7,6 @@
     "typescript": "^2.6.1"
   },
   "scripts": {
-    "start": "time tsc index.ts"
+    "start": "time npx tsc --lib \"es5\" index.ts"
   }
 }

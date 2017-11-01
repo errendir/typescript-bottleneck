@@ -1,5 +1,3 @@
-import { List } from './smallExpensive'
+import { SuperType } from './smallExpensive'
 
-const cd: List<number> = "k" as any //List<number>([1])
-
-console.log(cd,1)
+const cd: SuperType<number> = "k" as any //List<number>([1])
