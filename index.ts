@@ -1,3 +1,9 @@
-import { SuperType } from './smallExpensive'
+//import { List } from './expensive'
+import { SuperType, SubType } from './smallExpensive1'
 
-const cd: SuperType<number> = "k" as any //List<number>([1])
+//declare var console: any
+
+// function test<T>(a: SuperType<T>) {
+//   const b: SubType<T> = a
+//   console.log(b)
+// }

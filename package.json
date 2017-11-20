@@ -7,6 +7,8 @@
     "typescript": "^2.6.1"
   },
   "scripts": {
-    "start": "time npx tsc --lib \"es5\" index.ts"
+    "start": "time npx tsc --logLongCheckerCalls --logLongTimeThreshold 300 --logCheckerShortcut --lib \"es5\" index.ts",
+    "slow": "time npx tsc --lib \"es5\" index.ts",
+    "fast": "time npx tsc --logCheckerShortcut --lib \"es5\" index.ts"
   }
 }
