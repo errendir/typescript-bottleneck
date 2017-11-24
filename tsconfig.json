@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "lib": [
+      "es5"
+    ]
+  },
+  "files": []
+}
