@@ -15,8 +15,8 @@ module.exports = env => {
           test: /\.ts$/,
           use: [
             {
-              loader: 'awesome-typescript-loader',
-              options: { configFileName: 'tsconfig.json', useBabel: true, useCache: true }
+              loader: 'ts-loader',
+              options: { configFile: 'tsconfig.json' }
             }
           ],
         },
@@ -24,6 +24,6 @@ module.exports = env => {
     },
     resolve: {
       extensions: ['.ts', '.js']
-    }
+    },
   }
 }

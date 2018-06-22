@@ -6,14 +6,17 @@
   "dependencies": {
     "awesome-typescript-loader": "^3.4.0",
     "babel-core": "^6.26.0",
-    "typescript": "^2.6.1",
+    "ts-loader": "^3.1.1",
+    "typescript": "^2.9.2",
+    "typescript-edge": "../TypeScript",
     "webpack": "^3.8.1"
   },
   "scripts": {
     "start": "time npx tsc --logLongCheckerCalls --logLongTimeThreshold 300 --logCheckerShortcut --lib \"es5\" index.ts",
-    "slow": "time npx tsc --lib \"es5\" index.ts",
-    "fast": "time npx tsc --logCheckerShortcut --lib \"es5\" index.ts",
-    "watch:awesome": "npx webpack --watch --config webpack.config.js",
+    "slow": "time node --max_old_space_size=8192 node_modules/typescript/bin/tsc --lib \"es5\" index.ts",
+    "fast": "time node_modules/typescript-edge/bin/tsc --lib \"es5\" index.ts",
+    "watch:atl": "npx webpack --watch --config webpack.atl.config.js",
+    "watch:tsl": "npx webpack --watch --config webpack.tsl.config.js",
     "watch:tsc": "npx tsc --outDir ./tsc-build --watch --lib \"es5\" index.ts"
   }
 }
