@@ -7,7 +7,7 @@ export class SubType<T> {
   duplicate6: SubType<[T,T,T,T,T,T,T]>;
   duplicate7: SubType<[T,T,T,T,T,T,T,T]>;
   duplicate8: SubType<[T,T,T,T,T,T,T,T,T]>;
-  duplicate9: SubType<[T,T,T,T,T,T,T,T,T,T]>;
+  // duplicate9: SubType<[T,T,T,T,T,T,T,T,T,T]>;
 
   // duplicate10: SubType<[T,T,T,T,T,T,T,T,T,T,T]>;
   // duplicate11: SubType<[T,T,T,T,T,T,T,T,T,T,T,T]>;
@@ -30,7 +30,7 @@ export class SuperType<T> extends SubType<T> {
   duplicate6: SuperType<[T,T,T,T,T,T,T]>;
   duplicate7: SuperType<[T,T,T,T,T,T,T,T]>;
   duplicate8: SuperType<[T,T,T,T,T,T,T,T,T]>;
-  duplicate9: SuperType<[T,T,T,T,T,T,T,T,T,T]>;
+  // duplicate9: SuperType<[T,T,T,T,T,T,T,T,T,T]>;
 
   // duplicate10: SuperType<[T,T,T,T,T,T,T,T,T,T,T]>;
   // duplicate11: SuperType<[T,T,T,T,T,T,T,T,T,T,T,T]>;
