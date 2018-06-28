@@ -18,6 +18,18 @@ type Not<Bool> =
       ? False
   : never
 
+type And<Bool1, Bool2> =
+  Bool1 extends True
+    ? Bool2 extends True ? True : False
+    : False
+
+type Or<Bool1, Bool2> =
+    Bool1 extends True
+      ? True
+  : Bool2 extends True 
+      ? True
+  : False
+
 type BSplit<A> = BinarySplit<A,Zero,One>
 
 enum UnaryZero { unaryZero = "unaryZero" }
@@ -57,7 +69,7 @@ type UnwrapLast<WrappedType> = WrappedType extends { wrap: infer T }
   ? T
   : WrappedType
 
-type Unwrap<WrappedType> = UnwrapLast<UnwrapLast<UnwrapDouble<WrappedType>>>
+type Unwrap<WrappedType> = UnwrapLast<UnwrapLast<UnwrapLast<UnwrapDouble<WrappedType>>>>
 
 type FiveDigits = 
   (BSplit<BSplit<BSplit<BSplit<BSplit<End>>>>>)["zero" | "one"]["zero" | "one"]["zero" | "one"]["zero" | "one"]["zero" | "one"]
@@ -86,6 +98,9 @@ type SubtractUnaryWrappd<UIntA, UIntB> =
     ? { wrap: SubtractUnaryWrappd<UnaryDecrement<UIntA>, UIntBDecremented> }
   : never
 type SubtractUnary<UIntA, UIntB> = Unwrap<SubtractUnaryWrappd<UIntA,UIntB>>
+
+type ShouldBeUnaryOne1 = SubtractUnary<UnarySix,UnaryFive>
+const ShouldBeUnaryOne1: ShouldBeUnaryOne1 = 0 as any as UnaryOne
 
 type DoubleUnaryWrapped<UnaryNumber> = UnaryNumber extends [infer UnaryNumberDecremented, PlusOne]
   ? { wrap: [[Unwrap<DoubleUnaryWrapped<UnaryNumberDecremented>>, PlusOne], PlusOne] }
@@ -126,25 +141,44 @@ type AppendToBinaryWrapped<BinaryNumber, Digit> =
   : never
 type AppendToBinary<BinaryNumber, Digit> = Unwrap<AppendToBinaryWrapped<BinaryNumber, Digit>>
 
-type ReverseBinaryWrapped<BinaryNumber> =
-    BinaryNumber extends End
+type ReverseListWrapped<List> =
+    List extends End
       ? End
-  : BinaryNumber extends [infer Head, infer Tail]
-      ? { wrap: AppendToBinaryWrapped<Unwrap<ReverseBinaryWrapped<Head>>, Tail> }
+  : List extends [infer Head, infer Tail]
+      ? { wrap: AppendToBinaryWrapped<Unwrap<ReverseListWrapped<Head>>, Tail> }
   : Zero
-type ReverseBinary<BinaryNumber> = Unwrap<ReverseBinaryWrapped<BinaryNumber>>
+type ReverseList<BinaryNumber> = Unwrap<ReverseListWrapped<BinaryNumber>>
+
+type Tail<List> =
+    List extends End
+      ? End
+  : List extends [infer Tail, infer Head]
+      ? Tail
+  : never
+
+type Head<List> = List extends [infer Tail, infer Head]
+  ? Head
+  : never
+
+type UnnestListWrapped<List> =
+    List extends End
+      ? never
+  : List extends [infer Tail, infer Head]
+      ? { wrap: Unwrap<UnnestListWrapped<Tail>> | Head }
+  : never
+type UnnestList<List> = Unwrap<UnnestListWrapped<List>>
 
 type ioio = [[[[End, One], Zero], One], Zero]
 type oioio = AppendToBinary<ioio, Zero>
-type oioi = ReverseBinaryWrapped<ioio>
+type oioi = ReverseListWrapped<ioio>
 
 type BinaryToUnaryWrapped<BinaryNumber> =
     BinaryNumber extends End
       ? UnaryZero
-  : ReverseBinary<BinaryNumber> extends [infer Rest, One]
-      ? { wrap: AddUnary<DoubleUnary<Unwrap<BinaryToUnaryWrapped<ReverseBinary<Rest>>>>, UnaryIncrement<UnaryZero>> }
-  : ReverseBinary<BinaryNumber> extends [infer Rest, Zero]
-      ? { wrap: DoubleUnary<Unwrap<BinaryToUnaryWrapped<ReverseBinary<Rest>>>> }
+  : ReverseList<BinaryNumber> extends [infer Rest, One]
+      ? { wrap: AddUnary<DoubleUnary<Unwrap<BinaryToUnaryWrapped<ReverseList<Rest>>>>, UnaryIncrement<UnaryZero>> }
+  : ReverseList<BinaryNumber> extends [infer Rest, Zero]
+      ? { wrap: DoubleUnary<Unwrap<BinaryToUnaryWrapped<ReverseList<Rest>>>> }
   : never
 type BinaryToUnary<BinaryNumber> = Unwrap<BinaryToUnaryWrapped<BinaryNumber>>
 
@@ -175,25 +209,87 @@ type UnarySequenceWrapped<MaxUnaryNumber> =
   : never
 type UnarySequence<MaxUnaryNumber> = Unwrap<UnarySequenceWrapped<MaxUnaryNumber>>
 
-type OneToSeven = UnarySequence<UnarySeven>
+type SevenToOne = UnarySequence<UnarySeven>
+type OneToSeven = ReverseList<SevenToOne>
 
 // Assuming numbers are different and have the same number of digits
-type IsGreaterWrapped<IntA,IntB> =
+type BinaryIsGreaterWrapped<IntA,IntB> =
     IntA extends [infer NextIntA, infer SigDigitA]
   ? IntB extends [infer NextIntB, infer SigDigitB]
     ? SigDigitA extends One
       ? SigDigitB extends One
-        ? { wrap: IsGreaterWrapped<NextIntA,NextIntB> }
+        ? { wrap: BinaryIsGreaterWrapped<NextIntA,NextIntB> }
         : True
       : SigDigitB extends One
         ? False
-        : { wrap: IsGreaterWrapped<NextIntA,NextIntB> }
+        : { wrap: BinaryIsGreaterWrapped<NextIntA,NextIntB> }
     : "brokenB"
   : "brokenA"
+type BinaryIsGreater<IntA,IntB> = Unwrap<BinaryIsGreaterWrapped<IntA,IntB>>
 
-type IsGreater<IntA,IntB> = Unwrap<IsGreaterWrapped<IntA,IntB>>
+type UnaryIsGreater<IntA,IntB> = SubtractUnary<IntA,IntB> extends UnaryZero
+  ? False
+  : True
 
-type Test5gt4 = IsGreater<[[[[End], One], Zero], One], [[[[End], Zero], Zero], One]>
+type Test5gt4 = BinaryIsGreater<[[[[End], One], Zero], One], [[[[End], Zero], Zero], One]>  
+
+type ModuloWrapped<IntA,IntB> =
+    IntA extends IntB
+      ? UnaryZero
+  : UnaryIsGreater<IntA,IntB> extends True
+      ? { wrap: ModuloWrapped<SubtractUnary<IntA,IntB>,IntB> }
+  : IntA
+type Modulo<IntA,IntB> = Unwrap<ModuloWrapped<IntA,IntB>>
+
+type UnaryThree = UnaryIncrement<UnaryTwo>
+type FiveModTwo = Modulo<UnaryFive,UnaryTwo>
+type SixModFive = Modulo<UnarySix,UnaryFive>
+
+type ShouldBeUnaryTwo2 = UnaryIsGreater<UnarySix,UnaryFive>
+type ShouldBeUnaryOne2 = SubtractUnary<UnarySix,UnaryFive>
+
+const T: SixModFive = 0 as any as UnaryOne
+
+type IsDividedBy<Number,Divisor> = Modulo<Number,Divisor> extends UnaryZero ? True : False
+
+type IsDivdedByOneOfWrapped<UnaryNumber,ListOfUnaryNumbers> = 
+    ListOfUnaryNumbers extends End
+      ? False
+  : ListOfUnaryNumbers extends [infer Tail, infer HeadUnaryNumber]
+      ? { wrap: Or<
+            Unwrap<IsDivdedByOneOfWrapped<UnaryNumber, Tail>>,
+            IsDividedBy<UnaryNumber,HeadUnaryNumber>
+          > }
+  : never
+type IsDivdedByOneOf<UnaryNumber,ListOfUnaryNumbers> = Unwrap<IsDivdedByOneOfWrapped<UnaryNumber,ListOfUnaryNumbers>>
+
+type TwoToFour = Tail<ReverseList<UnarySequence<UnaryFour>>>
+type TwoToFive = Tail<ReverseList<UnarySequence<UnaryFive>>>
+type IsFiveCompund = IsDivdedByOneOf<UnaryFive,TwoToFour>
+type IsSixCompund = IsDivdedByOneOf<UnarySix,TwoToFive>
+
+type PrimeNumbersHelperWrapped<UnaryListKToL,PrimesUntilK> =
+    UnaryListKToL extends End
+      ? PrimesUntilK
+  : UnaryListKToL extends [infer UnaryListKPlusOneToL, infer K] 
+      ? IsDivdedByOneOf<K,PrimesUntilK> extends False
+          ? { wrap: PrimeNumbersHelperWrapped<UnaryListKPlusOneToL,[PrimesUntilK, K]> }
+          : { wrap: PrimeNumbersHelperWrapped<UnaryListKPlusOneToL,PrimesUntilK> }
+  : { brokenWith: UnaryListKToL }
+
+type PrimeNumbersHelper<UnaryListTwoToN> = Unwrap<PrimeNumbersHelperWrapped<UnaryListTwoToN,End>>
+
+type PrimeNumbers<MaxUnaryNumber> = ReverseList<Unwrap<PrimeNumbersHelper<Tail<ReverseList<UnarySequence<MaxUnaryNumber>>>>>>
+
+type AllPrimesOneToFifteen = PrimeNumbers<UnaryFifteen>
+
+type ShouldBeTwo = Head<AllPrimesOneToFifteen>
+type ShouldBeThree = Head<Tail<AllPrimesOneToFifteen>>
+type ShouldBeFive = Head<Tail<Tail<AllPrimesOneToFifteen>>>
+type ShouldBeSeven = Head<Tail<Tail<Tail<AllPrimesOneToFifteen>>>>
+type ShouldBeEleven = Head<Tail<Tail<Tail<Tail<AllPrimesOneToFifteen>>>>>
+
+const ShouldBeEleven: ShouldBeEleven = 0 as any as UnaryIncrement<DoubleUnary<UnaryFive>>
 
 type MMM = [[[[End], One], Zero], One] extends [infer A, infer B] ? B : never
 
