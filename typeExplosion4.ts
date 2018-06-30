@@ -10,6 +10,7 @@ enum End { end = "end" }
 
 enum True { true = "true" }
 enum False { false = "false" }
+let onlyAcceptTrue: True
 
 type Not<Bool> =
     Bool extends False
@@ -29,6 +30,9 @@ type Or<Bool1, Bool2> =
   : Bool2 extends True 
       ? True
   : False
+
+type IsEquivalent<TypeA,TypeB> = TypeA extends TypeB ? TypeB extends TypeA ? True : False : False
+interface Assert { true: True }
 
 type BSplit<A> = BinarySplit<A,Zero,One>
 
@@ -287,16 +291,15 @@ type ShouldBeTwo = Head<AllPrimesOneToFifteen>
 type ShouldBeThree = Head<Tail<AllPrimesOneToFifteen>>
 type ShouldBeFive = Head<Tail<Tail<AllPrimesOneToFifteen>>>
 type ShouldBeSeven = Head<Tail<Tail<Tail<AllPrimesOneToFifteen>>>>
-type ShouldBeEleven = Head<Tail<Tail<Tail<Tail<AllPrimesOneToFifteen>>>>>
+const ShouldBeSeven: ShouldBeSeven = 0 as any as UnaryIncrement<DoubleUnary<UnaryIncrement<DoubleUnary<UnaryOne>>>>
 
-const ShouldBeEleven: ShouldBeEleven = 0 as any as UnaryIncrement<DoubleUnary<UnaryFive>>
+type ShouldBeEleven = Head<Tail<Tail<Tail<Tail<AllPrimesOneToFifteen>>>>>
+type UnaryEleven = UnaryIncrement<DoubleUnary<UnaryIncrement<DoubleUnary<DoubleUnary<UnaryOne>>>>>
+onlyAcceptTrue = 0 as any as IsEquivalent<ShouldBeEleven,UnaryEleven>
 
 type MMM = [[[[End], One], Zero], One] extends [infer A, infer B] ? B : never
 
 type OOO = MMM extends One ? True : False
 
-// TODO: Iteration (map over the nested numbers)
-type C = { a: never, b: "b", c: "c" }
-type M = C[keyof C]
 
 const a: FiveDigits = 0 as any as Eleven
