@@ -179,18 +179,21 @@ type AandB = ResolvedObjectIntersection<{ a: number, b: number }, { a: string, b
 // Start: Interesting observations
 // We can force TypeScript to decide whether a type is possible or not
 // To do so we leverage that T | never is not always T
-// TypeScript will simplify T | never to T, if T is a generic so we delay this by using T | Second
-// And only passing the Second=never when the T is not a generic type anymore
-type Impossible = "v" & "s"
+// TypeScript will simplify T | never to T, if T is a generic so we delay this by using T | NeverDelay
+// And only passing the NeverDelay=never when the T is not a generic type anymore
+type Impossible1 = "v" & "s"
+type Impossible2 = true & false
 type Possible = "v" | "s"
 
 // Computation delay trick: Normally `keyof { [K in T]: any }` would simplify to `T`
-type IsPossible<T, Second> = T | Second
+type IsPossible<T, NeverDelay> = T | NeverDelay
 
-type Nope = IsPossible<Impossible, never>
-const abcd1: Nope = 0 as any as Impossible
+type Nope1 = IsPossible<Impossible1, never>
+type Nope2 = IsPossible<Impossible2, never>
+const abcd1: Nope1 = any
+const abcd2: Nope2 = any
 type Yeah = IsPossible<Possible, never>
-const abcd2: Yeah = 0 as any as Possible
+const abcd3: Yeah = any
 
 // End: Interesting observations
 
@@ -222,20 +225,25 @@ type C3 = keyof (never & { b: true })
 type C4 = keyof ({} & { b: true })
 type ConvertNotNeverToX<T extends string | number | symbol,X> = { [K in (T & string & "v")]: X }[T & string & "v"]
 
-type IsKey<T extends string | number | symbol,X> = { [K in T]: X }[T]
+type IsKey<T extends string | number | symbol,X,Y> = ({ [k: string]: Y } & { [K in T]: X })[T]
+
+type MOK0 = IsKey<never,true,false>
+type MOK1 = IsKey<"s",true,false>
+type MOK2 = IsKey<"t" | "u",true,false>
+type MOK3 = IsKey<"v" | "whatever",true,false>
 
 // The ["m" & StringDelay] trick is here to delay the distribution of keyof
 // We need to because `keyof (T & L)` is not always `(keyof T) | (keyof L)`
-// In particualr we need the delayed because one of K or L can be "never"
+// In particular we need the delayed because one of K or L can be "never"
 type SafeKeyOf<T,StringDelay> = keyof (({ m: T })["m" & StringDelay])
 
-type IsNotNever<T,X,StringDelay extends string> = IsKey<SafeKeyOf<T & { whatever: true },StringDelay>,X>
+type IsNotNever<T,X,Y,StringDelay extends string> = IsKey<SafeKeyOf<T & { whatever: true },StringDelay>,X,Y>
 
-type ShouldBeNever0 = IsNotNever<never,true,string>
-type ShouldBeTrue0 = IsNotNever<string,true,string>
-type ShouldBeTrue1 = IsNotNever<number,true,string>
-type ShouldBeTrue2 = IsNotNever<{},true,string>
-type ShouldBeTrue3 = IsNotNever<{ v: number },true,string>
+type ShouldBeNever0 = IsNotNever<never,true,never,string>
+type ShouldBeTrue0 = IsNotNever<string,true,never,string>
+type ShouldBeTrue1 = IsNotNever<number,true,never,string>
+type ShouldBeTrue2 = IsNotNever<{},true,never,string>
+type ShouldBeTrue3 = IsNotNever<{ v: number },true,never,string>
 
 type TE0 = ConvertNotNeverToX<never,true>
 const abbbb: TE0 = any
@@ -261,7 +269,7 @@ type What2 = NeverForOneKey<{ v: number, k: string },"k">
 
 //
 type Restrict<T,S extends keyof T> = { [K in S]: T[K] }
-type FindNonNeverKeys<T,StringDelay extends string> = { [K in keyof T]: IsNotNever<T[K] & K,K,StringDelay> }[keyof T]
+type FindNonNeverKeys<T,StringDelay extends string> = { [K in keyof T]: IsNotNever<T[K] & K,K,never,StringDelay> }[keyof T]
 type RemoveNeverValues<T,StringDelay extends string> = Restrict<T, FindNonNeverKeys<T,StringDelay> & keyof T>
 
 type Whatt1 = RemoveNeverValues<What1,string>
@@ -271,8 +279,6 @@ type RemoveOneKey<T, K extends keyof T, StringDelay extends string> = RemoveNeve
 
 type Whattt1 = RemoveOneKey<{ t: string, u: {} }, "t", string>
 type Whattt2 = RemoveOneKey<{ t: string, u: {} }, "u", string>
-
-type LLK = keyof ({ v: number } | { s: string }) | never
 
 type MapVOnly<T extends { v?: any }, NewVType, StringDelay extends string> = RemoveOneKey<T,"v",StringDelay> & { v: NewVType }
 //({ [K in keyof T]: T[K] } & { v: never }) & { [other: string]: any, v: true }
@@ -288,24 +294,17 @@ type Merge<T,S> = {
   [K in keyof T & keyof S]: T[K] & S[K]
 }
 
-//type IsNever<T> = 
-//type FlipUnknownNever<T> = 
+type ConditionHelper<T extends { true: any, false: any }, S extends { true: any, false: any }> = Merge<T,S>["true" | "false"]
+type Condition<T,IfTrue,IfFalse, StringDelay extends string> = IsNotNever<T,IfTrue,IfFalse,StringDelay> 
 
-type Condition<T extends { true: any, false: any }, S extends { true: any, false: any }> = Merge<T,S>["true" | "false"]
 
-type MKLO0 = HasKey<RemoveNeverValues<{ true: unknown }, string>,"true",never>
-type MKLO1 = RemoveNeverValues<{ true: never }, string>
+type T1 = Condition<unknown, {ifTrue: true}, {ifFalse: false}, string>
+type T2 = Condition<never, {ifTrue: true}, {ifFalse: false}, string>
 
-type T1 = Condition<{ true: unknown, false: never }, { true: {ifTrue: true}, false: {ifFalse: false} }>
-type T2 = Condition<{ true: never, false: unknown }, { true: {ifTrue: true}, false: {ifFalse: false} }>
+type IfVThen<TestType,IfTrue,IfFalse,StringDelay extends string> = Condition<HasV<TestType,never>, IfTrue, IfFalse,StringDelay>
 
-type IfVThen<TestType,IfTrue,IfFalse> = Condition<
-  { true: ConvertNotNeverToUnkown<HasV<TestType,never>>, false: never },
-  { true: IfTrue, false: IfFalse }
->
-
-type Test4 = IfVThen<{},true,false>
-type Test5 = IfVThen<{ v: 0 },true,false>
+type Test4 = IfVThen<{},true,false,string>
+type Test5 = IfVThen<{ v: 0 },true,false,string>
 // End: Condition
 
 // Start: Accept only certain numbers condition
@@ -313,41 +312,36 @@ type NZero = { s: true }
 type NIncrement<Number> = { v: Number }
 type NFive = NIncrement<NIncrement<NIncrement<NIncrement<NIncrement<NZero>>>>>
 
-type CHasV<Number,Second extends string> = ConvertNotNeverToUnkown<HasV<Number,Second>>
-type CHasS<Number,Second extends string> = ConvertNotNeverToUnkown<HasS<Number,Second>>
+type IsZero<Number extends any, NeverDelay, StringDelay extends string> = Condition<HasS<Number,NeverDelay>, true, false, StringDelay>
+type IsOne<Number extends any, NeverDelay, StringDelay extends string> = Condition<HasV<Number,NeverDelay>, IsZero<Number["v"],NeverDelay,StringDelay>, false, StringDelay>
+type IsTwo<Number extends any, NeverDelay, StringDelay extends string> = Condition<HasV<Number,NeverDelay>, IsOne<Number["v"],NeverDelay,StringDelay>, false, StringDelay>
+type IsThree<Number extends any, NeverDelay, StringDelay extends string> = Condition<HasV<Number,NeverDelay>, IsTwo<Number["v"],NeverDelay,StringDelay>, false, StringDelay>
+type IsFour<Number extends any, NeverDelay, StringDelay extends string> = Condition<HasV<Number,NeverDelay>, IsThree<Number["v"],NeverDelay,StringDelay>, false, StringDelay>
+type IsFive<Number extends any, NeverDelay, StringDelay extends string> = Condition<HasV<Number,NeverDelay>, IsFour<Number["v"],NeverDelay,StringDelay>, false, StringDelay>
 
-type IsZero<Number extends any, Second extends string> = Condition<{ true: CHasS<Number,Second>, false: never }, { true: true, false: never }>
-type IsOne<Number extends any, Second extends string> = Condition<{ true: CHasV<Number,Second>, false: never }, { true: IsZero<Number["v"],Second>, false: never }>
-type IsTwo<Number extends any, Second extends string> = Condition<{ true: CHasV<Number,Second>, false: never }, { true: IsOne<Number["v"],Second>, false: never }>
-type IsThree<Number extends any, Second extends string> = Condition<{ true: CHasV<Number,Second>, false: never }, { true: IsTwo<Number["v"],Second>, false: never }>
-type IsFour<Number extends any, Second extends string> = Condition<{ true: CHasV<Number,Second>, false: never }, { true: IsThree<Number["v"],Second>, false: never }>
-type IsFive<Number extends any, Second extends string> = Condition<{ true: CHasV<Number,Second>, false: never }, { true: IsFour<Number["v"],Second>, false: never }>
-
-const ttt0: IsZero<NZero,never> = true
-const ttt1: IsOne<NIncrement<NZero>,never> = true
-const ttt2: IsTwo<NIncrement<NIncrement<NZero>>,never> = true
-const ttt3: IsThree<NIncrement<NIncrement<NIncrement<NZero>>>,never> = true
+const ttt0: IsZero<NZero, never, string> = true
+const ttt1: IsOne<NIncrement<NZero>, never, string> = true
+const ttt2: IsTwo<NIncrement<NIncrement<NZero>>,never, string> = true
+const ttt3: IsThree<NIncrement<NIncrement<NIncrement<NZero>>>,never, string> = true
 
 interface InfiniteNumbersWithZero<Number> {
   next: InfiniteNumbersWithZero<NIncrement<Number>>
-  alwaysNever: never
+  alwaysNever: false
 }
 
-interface InfiniteNumbersWithWhat<Number> extends InfiniteNumbersWithZero<Number> {
-  next: InfiniteNumbersWithWhat<NIncrement<Number>>
-  alwaysNever: IsFive<Number,never>
+interface InfiniteNumbersWithWhat<Number, NeverDelay, StringDelay extends string> {
+  next: InfiniteNumbersWithWhat<NIncrement<Number>,NeverDelay, StringDelay>
+  alwaysNever: IsFive<Number,NeverDelay,StringDelay>
 }
 
-const infinite1: InfiniteNumbersWithZero<NZero> = any
-const infinite2: InfiniteNumbersWithWhat<NZero> = any
+declare let infinite1: InfiniteNumbersWithZero<NZero>
+declare let infinite2: InfiniteNumbersWithWhat<NZero, never, string>
+
+// If you replace alwaysNever: IsFive with alwaysNever: IsThree, error will be detected on the next line
+infinite1 = infinite2
+infinite1.next.next.next.next.next.alwaysNever = infinite2.next.next.next.next.next.alwaysNever
 
 // infinite1.alwaysNever = infinite2.alwaysNever
 // infinite1.next.next.alwaysNever = infinite2.next.next.alwaysNever
 
 // End: Accept only certain numbers condition
-
-type T3 = never & number
-type T4 = any & number
-type T5 = any | never
-type T6 = any & never
-type T7 = (true & false) | never
