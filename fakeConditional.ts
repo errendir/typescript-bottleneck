@@ -1,3 +1,5 @@
+namespace fakeConditional {
+
 // Start: Test helpers - the only example of real conditionals
 type IsEquivalentH<TypeA,TypeB> = TypeA extends TypeB ? TypeB extends TypeA ? 1 : 0 : 0
 type IsEquivalent<TypeA,TypeB> = IsEquivalentH<{ m: TypeA },{ m: TypeB }>
@@ -58,9 +60,9 @@ type Fails1 = DeniesOther<{ s: true }>
 
 // Start: HasKey
 // Using the IsPossible trick we can build the HasV type
-type HasKey<T,K,Second> = IsPossible<(K & keyof T), Second>
-type HasV<T,Second> = HasKey<T,"v",Second>
-type HasS<T,Second> = HasKey<T,"s",Second>
+type HasKey<T,K,NeverDelay> = IsPossible<(K & keyof T), NeverDelay>
+type HasV<T,NeverDelay> = HasKey<T,"v",NeverDelay>
+type HasS<T,NeverDelay> = HasKey<T,"s",NeverDelay>
 
 module Test1 {
   type ShouldBeNever0 = HasV<{}, never>
@@ -224,4 +226,45 @@ infinite1.next.next.next.next.next.alwaysNever = infinite2.next.next.next.next.n
 
 // End: Recursive conditional types structural assignability fail
 
-// Start: Lambda calculus equivalent to 
+// Start: Lambda calculus equivalent to typeExplosion4.ts
+
+type NUnwrapDouble<WrappedType extends any,NeverDelay,StringDelay extends string> = Condition<
+  HasKey<WrappedType,"wrap",NeverDelay>,
+    Condition<
+      HasKey<WrappedType["wrap"],"wrap",NeverDelay>,
+        { wrap: NUnwrapDouble<WrappedType["wrap"]["wrap"], NeverDelay,StringDelay> },
+        WrappedType,
+      StringDelay
+    >,
+    WrappedType,
+  StringDelay
+>
+
+type NUnwrapLast<WrappedType extends any,NeverDelay,StringDelay extends string> = Condition<
+  HasKey<WrappedType,"wrap",NeverDelay>,
+    WrappedType["wrap"],
+    WrappedType,
+  StringDelay
+>
+
+type NUnwrap<WrappedType, NeverDelay, StringDelay extends string> =
+  NUnwrapLast<NUnwrapLast<NUnwrapLast<NUnwrapDouble<WrappedType, NeverDelay, StringDelay>,NeverDelay,StringDelay>,NeverDelay,StringDelay>,NeverDelay,StringDelay>
+
+type NAddUnaryWrapped<UIntA, UIntB extends any,NeverDelay,StringDelay extends string> = 
+  Condition<
+    HasV<UIntB,NeverDelay>,
+      { wrap: NAddUnaryWrapped<NIncrement<UIntA>,UIntB["v"],NeverDelay,StringDelay> },
+      UIntA,
+    StringDelay
+  >
+type NAddUnary<UIntA, UIntB,NeverDelay,StringDelay extends string> = NUnwrap<NAddUnaryWrapped<UIntA, UIntB,NeverDelay,StringDelay>,NeverDelay,StringDelay>
+
+module Test5 {
+  type Four = NIncrement<NIncrement<NIncrement<NIncrement<NZero>>>>
+  type ShouldBeFour1 = NAddUnary<NIncrement<NZero>, NIncrement<NIncrement<NIncrement<NZero>>>, never, string>
+  type ShouldBeFour2 = NAddUnary<NIncrement<NIncrement<NZero>>, NIncrement<NIncrement<NZero>>, never, string>
+
+  onlyAcceptTrue = any as IsEquivalent<ShouldBeFour1,Four>
+  onlyAcceptTrue = any as IsEquivalent<ShouldBeFour2,Four>
+}
+}
