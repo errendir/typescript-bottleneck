@@ -1,3 +1,9 @@
+// Start: Test helpers - the only example of real conditionals
+type IsEquivalentH<TypeA,TypeB> = TypeA extends TypeB ? TypeB extends TypeA ? 1 : 0 : 0
+type IsEquivalent<TypeA,TypeB> = IsEquivalentH<{ m: TypeA },{ m: TypeB }>
+let onlyAcceptTrue: 1
+// End: Test helpers
+
 type unknown = {} | null | undefined
 
 interface InfiniteRecurse<T,K> {
@@ -28,12 +34,15 @@ type Possible = "v" | "s"
 // Computation delay trick: Normally `keyof { [K in T]: any }` would simplify to `T`
 type IsPossible<T, NeverDelay> = T | NeverDelay
 
-type Nope1 = IsPossible<Impossible1, never>
-type Nope2 = IsPossible<Impossible2, never>
-const abcd1: Nope1 = any
-const abcd2: Nope2 = any
-type Yeah = IsPossible<Possible, never>
-const abcd3: Yeah = any
+module Test0 {
+  type ShouldBeNever0 = IsPossible<Impossible1, never>
+  type ShouldBeNever1 = IsPossible<Impossible2, never>
+  type ShouldBeVorS = IsPossible<Possible, never>
+
+  onlyAcceptTrue = any as IsEquivalent<ShouldBeNever0,never>
+  onlyAcceptTrue = any as IsEquivalent<ShouldBeNever1,never>
+  onlyAcceptTrue = any as IsEquivalent<ShouldBeVorS, "v" | "s">
+}
 
 // End: Interesting observations
 
@@ -53,24 +62,34 @@ type HasKey<T,K,Second> = IsPossible<(K & keyof T), Second>
 type HasV<T,Second> = HasKey<T,"v",Second>
 type HasS<T,Second> = HasKey<T,"s",Second>
 
-const shouldFail1: HasV<{},never> = any
-const shouldPass1: HasV<{ v: true },never> = any
-const shouldFail2: HasV<{ s: true },never> = any
-const shouldPass2: HasS<{ s: true },never> = any
+module Test1 {
+  type ShouldBeNever0 = HasV<{}, never>
+  type ShouldBeNever1 = HasV<{ s: true }, never>
+  type ShouldBeV = HasV<{ v: true }, never>
+  type ShouldBeS = HasS<{ s: true }, never>
 
-// We want to make true to unknown and false to never
-type C1 = keyof (string & { b: true })
-type C2 = keyof (number & { b: true })
-type C3 = keyof (never & { b: true })
-type C4 = keyof ({} & { b: true })
-type ConvertNotNeverToX<T extends string | number | symbol,X> = { [K in (T & string & "v")]: X }[T & string & "v"]
+  onlyAcceptTrue = any as IsEquivalent<ShouldBeNever0,never>
+  onlyAcceptTrue = any as IsEquivalent<ShouldBeNever1,never>
+  onlyAcceptTrue = any as IsEquivalent<ShouldBeV,"v">
+  onlyAcceptTrue = any as IsEquivalent<ShouldBeS,"s">
+}
 
 type IsKey<T extends string | number | symbol,X,Y> = ({ [k: string]: Y } & { [K in T]: X })[T]
 
 type MOK0 = IsKey<never,true,false>
 type MOK1 = IsKey<"s",true,false>
 type MOK2 = IsKey<"t" | "u",true,false>
-type MOK3 = IsKey<"v" | "whatever",true,false>
+type MOK3 = IsKey<"t" & "u",true,false>
+type MOK4 = IsKey<"t" & string,true,false>
+type MOK5 = IsKey<number,true,false>
+
+// keyof shouldn't always distrubute over intersection type:
+type C1 = keyof (string & { b: true })
+type C2 = keyof (number & { b: true })
+type C3 = keyof ({} & { b: true })
+
+type C4_correct = keyof (never & { b: true })
+type C4_mistake = (keyof never) | (keyof { b: true })
 
 // The ["m" & StringDelay] trick is here to delay the distribution of keyof
 // We need to because `keyof (T & L)` is not always `(keyof T) | (keyof L)`
@@ -79,20 +98,32 @@ type SafeKeyOf<T,StringDelay> = keyof (({ m: T })["m" & StringDelay])
 
 type IsNotNever<T,X,Y,StringDelay extends string> = IsKey<SafeKeyOf<T & { whatever: true },StringDelay>,X,Y>
 
-type ShouldBeNever0 = IsNotNever<never,true,never,string>
-type ShouldBeTrue0 = IsNotNever<string,true,never,string>
-type ShouldBeTrue1 = IsNotNever<number,true,never,string>
-type ShouldBeTrue2 = IsNotNever<{},true,never,string>
-type ShouldBeTrue3 = IsNotNever<{ v: number },true,never,string>
+module Test2 {
+  type ShouldBeNever0 = IsNotNever<never,true,never,string>
+  type ShouldBeTrue0 = IsNotNever<string,true,never,string>
+  type ShouldBeTrue1 = IsNotNever<number,true,never,string>
+  type ShouldBeTrue2 = IsNotNever<{},true,never,string>
+  type ShouldBeTrue3 = IsNotNever<{ v: number },true,never,string>
 
-type TE0 = ConvertNotNeverToX<never,true>
-const abbbb: TE0 = any
-type TE1 = ConvertNotNeverToX<string,true>
-type TE2 = ConvertNotNeverToX<number,true>
-type TE3 = ConvertNotNeverToX<{ a: null },true>
-type TE4 = ConvertNotNeverToX<number & string,true>
+  onlyAcceptTrue = any as IsEquivalent<ShouldBeNever0,never>
+  onlyAcceptTrue = any as IsEquivalent<ShouldBeTrue0,true>
+  onlyAcceptTrue = any as IsEquivalent<ShouldBeTrue1,true>
+  onlyAcceptTrue = any as IsEquivalent<ShouldBeTrue2,true>
+  onlyAcceptTrue = any as IsEquivalent<ShouldBeTrue3,true>
+}
 
-type ConvertNotNeverToUnkown<T extends string | number | symbol> = ConvertNotNeverToX<T, unknown>
+// Here is an attempt to create IsNotNever without the delayed string
+type IsNotNever2<T extends string | number | symbol,X> = { [K in (T & string & "v")]: X }[T & string & "v"]
+
+module Test3 {
+  type TE0 = IsNotNever2<never,true>
+  type TE1 = IsNotNever2<string,true>
+  type TE2 = IsNotNever2<number,true>
+  type TE3 = IsNotNever2<{ a: null },true>
+  type TE4 = IsNotNever2<number & string,true>
+}
+
+type ConvertNotNeverToUnkown<T extends string | number | symbol> = IsNotNever2<T, unknown>
 type Som1 = ConvertNotNeverToUnkown<never>
 type Som2 = ConvertNotNeverToUnkown<"a">
 
@@ -104,21 +135,27 @@ type TT2 = ConvertNotNeverToUnkown<HasV<{ v: number },never>>
 type KeySelector<T,K extends keyof T,RestType> = (({ [M in keyof T]: RestType }) & ({ [key in K]: never }))
 type NeverForOneKey<T, K extends keyof T> = { [P in (keyof T) | K]: KeySelector<T,K,T[P]>[P] }
 
-type What1 = NeverForOneKey<{ v: number, k: string },"v">
-type What2 = NeverForOneKey<{ v: number, k: string },"k">
-
-//
 type Restrict<T,S extends keyof T> = { [K in S]: T[K] }
-type FindNonNeverKeys<T,StringDelay extends string> = { [K in keyof T]: IsNotNever<T[K] & K,K,never,StringDelay> }[keyof T]
+type FindNonNeverKeys<T,StringDelay extends string> = { [K in keyof T]: IsNotNever<T[K] & K, K, never, StringDelay> }[keyof T]
 type RemoveNeverValues<T,StringDelay extends string> = Restrict<T, FindNonNeverKeys<T,StringDelay> & keyof T>
-
-type Whatt1 = RemoveNeverValues<What1,string>
-type Whatt2 = RemoveNeverValues<What2,string>
 
 type RemoveOneKey<T, K extends keyof T, StringDelay extends string> = RemoveNeverValues<NeverForOneKey<T,K>,StringDelay>
 
-type Whattt1 = RemoveOneKey<{ t: string, u: {} }, "t", string>
-type Whattt2 = RemoveOneKey<{ t: string, u: {} }, "u", string>
+module Test4 {
+  type NeverV = NeverForOneKey<{ v: number, k: string },"v">
+  type NeverK = NeverForOneKey<{ v: number, k: string },"k">
+  type RemoveV = RemoveNeverValues<NeverV,string>
+  type RemoveK = RemoveNeverValues<NeverK,string>
+  type RemoveT = RemoveOneKey<{ t: string, u: {} }, "t", string>
+  type RemoveU = RemoveOneKey<{ t: string, u: {} }, "u", string>
+
+  onlyAcceptTrue = any as IsEquivalent<NeverV,{ v: never, k: string }>
+  onlyAcceptTrue = any as IsEquivalent<NeverK,{ v: number, k: never }>
+  onlyAcceptTrue = any as IsEquivalent<RemoveV,{ k: string }>
+  onlyAcceptTrue = any as IsEquivalent<RemoveK,{ v: number }>
+  onlyAcceptTrue = any as IsEquivalent<RemoveT,{ u: {} }>
+  onlyAcceptTrue = any as IsEquivalent<RemoveU,{ t: string }>
+}
 
 type MapVOnly<T extends { v?: any }, NewVType, StringDelay extends string> = RemoveOneKey<T,"v",StringDelay> & { v: NewVType }
 //({ [K in keyof T]: T[K] } & { v: never }) & { [other: string]: any, v: true }
@@ -163,7 +200,9 @@ const ttt0: IsZero<NZero, never, string> = true
 const ttt1: IsOne<NIncrement<NZero>, never, string> = true
 const ttt2: IsTwo<NIncrement<NIncrement<NZero>>,never, string> = true
 const ttt3: IsThree<NIncrement<NIncrement<NIncrement<NZero>>>,never, string> = true
+// End: Accept only certain numbers condition
 
+// Start: Recursive conditional types structural assignability fail
 interface InfiniteNumbersWithZero<Number> {
   next: InfiniteNumbersWithZero<NIncrement<Number>>
   alwaysNever: false
@@ -179,9 +218,10 @@ declare let infinite2: InfiniteNumbersWithWhat<NZero, never, string>
 
 // If you replace alwaysNever: IsFive with alwaysNever: IsThree, error will be detected on the next line
 infinite1 = infinite2
+infinite1.alwaysNever = infinite2.alwaysNever
+infinite1.next.next.alwaysNever = infinite2.next.next.alwaysNever
 infinite1.next.next.next.next.next.alwaysNever = infinite2.next.next.next.next.next.alwaysNever
 
-// infinite1.alwaysNever = infinite2.alwaysNever
-// infinite1.next.next.alwaysNever = infinite2.next.next.alwaysNever
+// End: Recursive conditional types structural assignability fail
 
-// End: Accept only certain numbers condition
+// Start: Lambda calculus equivalent to 
