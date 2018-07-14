@@ -92,7 +92,7 @@ type C4_mistake = (keyof never) | (keyof { b: true })
 // In particular we need the delayed because one of K or L can be "never"
 type SafeKeyOf<T,StringDelay> = keyof (({ m: T })["m" & StringDelay])
 
-type IsNotNever<T,X,Y,StringDelay> = IsKey<SafeKeyOf<T & { whatever: true },StringDelay>,X,Y>
+type IsNotNever<T,X,Y,StringDelay> = IsKey<SafeKeyOf<T & { whatever: true },StringDelay> & "whatever",X,Y>
 
 type IsSimpleTypeCompatible<T,K,X,Y,NeverDelay,StringDelay> = IsNotNever<IsPossible<T & K, NeverDelay>,X,Y,StringDelay>
 
@@ -100,20 +100,21 @@ module Test2 {
   type ShouldBeNever0 = IsNotNever<never,true,never,string>
   type ShouldBeTrue0 = IsNotNever<string,true,never,string>
   type ShouldBeTrue1 = IsNotNever<number,true,never,string>
-  type ShouldBeTrue2 = IsNotNever<{},true,never,string>
-  type ShouldBeTrue3 = IsNotNever<{ v: number },true,never,string>
+  type ShouldBeTrue2 = IsNotNever<boolean,true,never,string>
+  type ShouldBeTrue3 = IsNotNever<{},true,never,string>
+  type ShouldBeTrue4 = IsNotNever<{ v: number },true,never,string>
 
-  type ShouldBeTrue4 = IsSimpleTypeCompatible<string,string,true,false,never,string>
-  type ShouldBeTrue5 = IsSimpleTypeCompatible<number,number,true,false,never,string>
-  type ShouldBeTrue6 = IsSimpleTypeCompatible<boolean|number,boolean,true,false,never,string>
+  type ShouldBeTrue5 = IsSimpleTypeCompatible<string,string,true,false,never,string>
+  type ShouldBeTrue6 = IsSimpleTypeCompatible<number,number,true,false,never,string>
+  type ShouldBeTrue7 = IsSimpleTypeCompatible<boolean|number,boolean,true,false,never,string>
   type ShouldBeFalse0 = IsSimpleTypeCompatible<boolean,string,true,false,never,string>
 
   type ShouldBeFalse1 = IsKey<never,true,false>
-  type ShouldBeTrue7 = IsKey<"s",true,false>
-  type ShouldBeTrue8 = IsKey<"t" | "u",true,false>
+  type ShouldBeTrue8 = IsKey<"s",true,false>
+  type ShouldBeTrue9 = IsKey<"t" | "u",true,false>
   type ShouldBeFalse2 = IsKey<"t" & "u",true,false>
-  type ShouldBeTrue9 = IsKey<"t" & string,true,false>
-  type ShouldBeTrue10 = IsKey<number,true,false>
+  type ShouldBeTrue10 = IsKey<"t" & string,true,false>
+  type ShouldBeTrue11 = IsKey<number,true,false>
 
   onlyAcceptTrue = any as IsEquivalent<ShouldBeNever0,never>
 
@@ -132,6 +133,7 @@ module Test2 {
   onlyAcceptTrue = any as IsEquivalent<ShouldBeTrue8,true>
   onlyAcceptTrue = any as IsEquivalent<ShouldBeTrue9,true>
   onlyAcceptTrue = any as IsEquivalent<ShouldBeTrue10,true>
+  onlyAcceptTrue = any as IsEquivalent<ShouldBeTrue11,true>
 }
 
 // Here is an attempt to create IsNotNever without the delayed string
@@ -194,7 +196,7 @@ type Merge<T,S> = {
 }
 
 type ConditionHelper<T extends { true: any, false: any }, S extends { true: any, false: any }> = Merge<T,S>["true" | "false"]
-type Condition<T,IfTrue,IfFalse, StringDelay> = IsNotNever<T,IfTrue,IfFalse,StringDelay> 
+type Condition<T,IfTrue,IfFalse,StringDelay> = IsNotNever<T,IfTrue,IfFalse,StringDelay> 
 
 
 type T1 = Condition<unknown, {ifTrue: true}, {ifFalse: false}, string>
@@ -248,11 +250,11 @@ infinite1.next.next.next.next.next.alwaysNever = infinite2.next.next.next.next.n
 
 // Start: Lambda calculus equivalent to typeExplosion4.ts
 
-type NUnwrapDouble<WrappedType extends any,NeverDelay,StringDelay> = Condition<
+type UnwrapDouble<WrappedType extends any,NeverDelay,StringDelay> = Condition<
   HasKey<WrappedType,"wrap",NeverDelay>,
     Condition<
       HasKey<WrappedType["wrap"],"wrap",NeverDelay>,
-        { wrap: NUnwrapDouble<WrappedType["wrap"]["wrap"], NeverDelay,StringDelay> },
+        { wrap: UnwrapDouble<WrappedType["wrap"]["wrap"], NeverDelay,StringDelay> },
         WrappedType,
       StringDelay
     >,
@@ -260,7 +262,7 @@ type NUnwrapDouble<WrappedType extends any,NeverDelay,StringDelay> = Condition<
   StringDelay
 >
 
-type NUnwrapLast<WrappedType extends any,NeverDelay,StringDelay> = Condition<
+type UnwrapLast<WrappedType extends any,NeverDelay,StringDelay> = Condition<
   HasKey<WrappedType,"wrap",NeverDelay>,
     WrappedType["wrap"],
     WrappedType,
@@ -268,7 +270,7 @@ type NUnwrapLast<WrappedType extends any,NeverDelay,StringDelay> = Condition<
 >
 
 type NUnwrap<WrappedType, NeverDelay, StringDelay> =
-  NUnwrapLast<NUnwrapLast<NUnwrapLast<NUnwrapDouble<WrappedType, NeverDelay, StringDelay>,NeverDelay,StringDelay>,NeverDelay,StringDelay>,NeverDelay,StringDelay>
+  UnwrapLast<UnwrapLast<UnwrapLast<UnwrapDouble<WrappedType, NeverDelay, StringDelay>,NeverDelay,StringDelay>,NeverDelay,StringDelay>,NeverDelay,StringDelay>
 
 type NAddUnaryWrapped<UIntA, UIntB extends any,NeverDelay,StringDelay> = 
   Condition<
