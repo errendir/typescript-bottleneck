@@ -48,7 +48,7 @@ export interface SeqIndexed<T> extends CollectionIndexed<T> {
 
 export interface CollectionIndexed<T> extends Collection<number, T> {
   interpose(separator: T): this;
-  
+
   zip<U>(other: Collection<any, U>): CollectionIndexed<[T,U]>;
   zip<U,V>(other: Collection<any, U>, other2: Collection<any, V>): CollectionIndexed<[T,U,V]>;
   zip(...collections: Array<Collection<any, any>>): CollectionIndexed<any>;

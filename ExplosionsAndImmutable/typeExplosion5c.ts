@@ -85,31 +85,14 @@ export class SuperType<Number, TypeID extends keyof Reparametrize<any> = SuperTy
 //   //oneMoreThing: Number
 // }
 
-interface Test { "eleven": number, "twelve": string }
-
-interface A<T,K extends keyof Test> { 
-  value: T
-  key: K 
-}
-interface B<T,K extends keyof Test = "twelve"> extends A<T,K> {
-  value: T & { oneMoreThing: string }
-}
-
-
 function a<T>() {
   const any: any = 0
-  // WHY is the type of x2 reduced but the type of x1 is not? 
-  let x1 = !true ? (any as SubType<T, SuperTypeID>) : (any as SuperType<T>)
-  let x2 = !true ? (any as A<T,"twelve">) : (any as B<T>);  // A
-  
-  type T1 = SuperType<T, SuperTypeID> | SubType<T, SuperTypeID>
-  type T2 = A<T,"twelve"> | B<T>
-  
+
   // The following brings the performance back to the typeExplosion5.ts level
-  // const a: SubType<T> = 0 as any as SuperType<T>
+  const a: SubType<T> = 0 as any as SuperType<T>
 
   // The following assignment destroys performance even better than the previous
-  const a: SubType<T> = 0 as any as SuperType<T>
+  // const a: SubType<T> = any as SuperType<T>
   // const b: SubType<T> = 0 as any as SubType<T, SuperTypeID>
   // const c: SubType<T> = 0 as any as SubType<T, Defuse3TypeID>
   // const d: SubType<T> = 0 as any as SubType<T, IrrelevantTypeID>

@@ -8,9 +8,9 @@ export class SubType<Number> {
   duplicate4: SubType<[Number, O, O, Z, Z]>;
   duplicate5: SubType<[Number, Z, Z, O, Z]>;
   duplicate6: SubType<[Number, O, Z, O, Z]>;
-  // duplicate7: SubType<[Number, Z, O, O, Z]>;
-  // duplicate8: SubType<[Number, O, O, O, Z]>;
-  // duplicate9: SubType<[Number, Z, Z, Z, O]>;
+  duplicate7: SubType<[Number, Z, O, O, Z]>;
+  duplicate8: SubType<[Number, O, O, O, Z]>;
+  duplicate9: SubType<[Number, Z, Z, Z, O]>;
 
   // duplicate10: SubType<[Number, O, Z, Z, O]>;
   // duplicate11: SubType<[Number, Z, O, Z, O]>;
@@ -29,9 +29,9 @@ export class SuperType<Number> extends SubType<Number> {
   duplicate4: SuperType<[Number, O, O, Z, Z]>;
   duplicate5: SuperType<[Number, Z, Z, O, Z]>;
   duplicate6: SuperType<[Number, O, Z, O, Z]>;
-  // duplicate7: SuperType<[Number, Z, O, O, Z]>;
-  // duplicate8: SuperType<[Number, O, O, O, Z]>;
-  // duplicate9: SuperType<[Number, Z, Z, O, O]>;
+  duplicate7: SuperType<[Number, Z, O, O, Z]>;
+  duplicate8: SuperType<[Number, O, O, O, Z]>;
+  duplicate9: SuperType<[Number, Z, Z, O, O]>;
 
   // duplicate10: SuperType<[Number, O, Z, Z, O]>;
   // duplicate11: SuperType<[Number, Z, O, Z, O]>;

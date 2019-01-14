@@ -157,3 +157,13 @@ module BrokenExample5 {
     .recurseWithTrue.recurseWithTrue.recurseWithTrue
     .mustBeFalse
 }
+
+// Problem: partially binding args
+
+// const wrapLogUsual: <M extends any[]>(fn: (type: Type, ...args: M) => Type | undefined) => any = <M>wrapLogCustom<M, Type>(
+//   (type: Type, ...args: M) => `${typeToString(type)}${args.length > 0 ? "," + args.join(",") : ""}`,
+//   (ret: Type | undefined) => `${ret && typeToString(ret)}`
+// );
+// const wrapLog = <M extends any[]>(fn: (type: Type, ...args: M) => Type | undefined): (type: Type, ...args: M) => Type | undefined => {
+//   return wrapLogUsual(fn);
+// };

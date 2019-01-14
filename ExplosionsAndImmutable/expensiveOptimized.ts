@@ -1,3 +1,7 @@
+// OPTIMIZING THE IMMUTABLE.JS TYPES WITH THE REPARAM TRICK
+// The reparametrization trick is borrowed from here:
+// https://github.com/Microsoft/TypeScript/issues/25947#issuecomment-407929455
+
 interface Iterable<C> {}
 
 const unrelated = Symbol()
